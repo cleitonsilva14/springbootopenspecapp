@@ -29,6 +29,7 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.header;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.content;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
@@ -63,6 +64,9 @@ class CategoryControllerTest {
         mockMvc.perform(post("/api/categories").contentType(MediaType.APPLICATION_JSON)
                         .content("{\"name\":\"\"}"))
                 .andExpect(status().isBadRequest())
+                .andExpect(content().contentTypeCompatibleWith(MediaType.APPLICATION_PROBLEM_JSON))
+                .andExpect(jsonPath("$.type").value("urn:problem-type:validation-error"))
+                .andExpect(jsonPath("$.instance").value("/api/categories"))
                 .andExpect(jsonPath("$.fieldErrors[0].field").value("name"));
         verifyNoInteractions(categoryService);
     }
@@ -75,7 +79,10 @@ class CategoryControllerTest {
         mockMvc.perform(post("/api/categories").contentType(MediaType.APPLICATION_JSON)
                         .content("{\"name\":\"x\"}"))
                 .andExpect(status().isConflict())
-                .andExpect(jsonPath("$.status").value(409));
+                .andExpect(content().contentTypeCompatibleWith(MediaType.APPLICATION_PROBLEM_JSON))
+                .andExpect(jsonPath("$.type").value("urn:problem-type:business-conflict"))
+                .andExpect(jsonPath("$.status").value(409))
+                .andExpect(jsonPath("$.detail").value("Category with name 'x' already exists"));
     }
 
     @Test
@@ -107,8 +114,13 @@ class CategoryControllerTest {
 
         mockMvc.perform(get("/api/categories/999"))
                 .andExpect(status().isNotFound())
-                .andExpect(jsonPath("$.path").value("/api/categories/999"))
-                .andExpect(jsonPath("$.message").value("Category with id 999 not found"));
+                .andExpect(content().contentTypeCompatibleWith(MediaType.APPLICATION_PROBLEM_JSON))
+                .andExpect(jsonPath("$.type").value("urn:problem-type:resource-not-found"))
+                .andExpect(jsonPath("$.title").value("Resource not found"))
+                .andExpect(jsonPath("$.instance").value("/api/categories/999"))
+                .andExpect(jsonPath("$.detail").value("Category with id 999 not found"))
+                .andExpect(jsonPath("$.message").doesNotExist())
+                .andExpect(jsonPath("$.path").doesNotExist());
     }
 
     @Test
@@ -151,8 +163,10 @@ class CategoryControllerTest {
     void requestWithoutAuthenticationReturns401() throws Exception {
         mockMvc.perform(get("/api/categories"))
                 .andExpect(status().isUnauthorized())
+                .andExpect(content().contentTypeCompatibleWith(MediaType.APPLICATION_PROBLEM_JSON))
+                .andExpect(jsonPath("$.type").value("urn:problem-type:unauthorized"))
                 .andExpect(jsonPath("$.status").value(401))
-                .andExpect(jsonPath("$.path").value("/api/categories"));
+                .andExpect(jsonPath("$.instance").value("/api/categories"));
         verifyNoInteractions(categoryService);
     }
 }

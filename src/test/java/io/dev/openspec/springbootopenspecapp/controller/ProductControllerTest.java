@@ -36,6 +36,7 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.header;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.content;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
@@ -78,6 +79,9 @@ class ProductControllerTest {
         mockMvc.perform(post("/api/products").contentType(MediaType.APPLICATION_JSON)
                         .content("{\"name\":\"\",\"price\":-1,\"stockQuantity\":-1}"))
                 .andExpect(status().isBadRequest())
+                .andExpect(content().contentTypeCompatibleWith(MediaType.APPLICATION_PROBLEM_JSON))
+                .andExpect(jsonPath("$.type").value("urn:problem-type:validation-error"))
+                .andExpect(jsonPath("$.detail").value("Request has 4 invalid field(s)"))
                 .andExpect(jsonPath("$.fieldErrors[*].field",
                         containsInAnyOrder("name", "price", "stockQuantity", "categoryId")));
         verifyNoInteractions(productService);
@@ -100,7 +104,9 @@ class ProductControllerTest {
         mockMvc.perform(post("/api/products").contentType(MediaType.APPLICATION_JSON)
                         .content("{\"name\":\"N\",\"price\":1,\"stockQuantity\":0,\"categoryId\":999}"))
                 .andExpect(status().isNotFound())
-                .andExpect(jsonPath("$.message").value("Category with id 999 not found"));
+                .andExpect(content().contentTypeCompatibleWith(MediaType.APPLICATION_PROBLEM_JSON))
+                .andExpect(jsonPath("$.type").value("urn:problem-type:resource-not-found"))
+                .andExpect(jsonPath("$.detail").value("Category with id 999 not found"));
     }
 
     @Test
@@ -171,7 +177,10 @@ class ProductControllerTest {
     void invalidPathVariableReturns400() throws Exception {
         mockMvc.perform(get("/api/products/abc"))
                 .andExpect(status().isBadRequest())
-                .andExpect(jsonPath("$.status").value(400));
+                .andExpect(content().contentTypeCompatibleWith(MediaType.APPLICATION_PROBLEM_JSON))
+                .andExpect(jsonPath("$.type").value("urn:problem-type:invalid-parameter"))
+                .andExpect(jsonPath("$.status").value(400))
+                .andExpect(jsonPath("$.detail").value("Invalid value 'abc' for parameter 'id'"));
         verifyNoInteractions(productService);
     }
 
@@ -206,8 +215,10 @@ class ProductControllerTest {
     void requestWithoutAuthenticationReturns401() throws Exception {
         mockMvc.perform(get("/api/products"))
                 .andExpect(status().isUnauthorized())
+                .andExpect(content().contentTypeCompatibleWith(MediaType.APPLICATION_PROBLEM_JSON))
+                .andExpect(jsonPath("$.type").value("urn:problem-type:unauthorized"))
                 .andExpect(jsonPath("$.status").value(401))
-                .andExpect(jsonPath("$.path").value("/api/products"));
+                .andExpect(jsonPath("$.instance").value("/api/products"));
         verifyNoInteractions(productService);
     }
 }

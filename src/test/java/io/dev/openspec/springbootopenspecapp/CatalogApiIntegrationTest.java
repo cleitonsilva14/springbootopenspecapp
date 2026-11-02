@@ -14,7 +14,9 @@ import org.springframework.test.web.servlet.MvcResult;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.patch;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.content;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.header;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
@@ -95,8 +97,35 @@ class CatalogApiIntegrationTest {
     void requestWithoutTokenIsRejected() throws Exception {
         mockMvc.perform(get("/api/products"))
                 .andExpect(status().isUnauthorized())
+                .andExpect(content().contentTypeCompatibleWith(MediaType.APPLICATION_PROBLEM_JSON))
+                .andExpect(jsonPath("$.type").value("urn:problem-type:unauthorized"))
+                .andExpect(jsonPath("$.title").value("Unauthorized"))
                 .andExpect(jsonPath("$.status").value(401))
-                .andExpect(jsonPath("$.path").value("/api/products"));
+                .andExpect(jsonPath("$.detail").isNotEmpty())
+                .andExpect(jsonPath("$.instance").value("/api/products"))
+                .andExpect(jsonPath("$.path").doesNotExist());
+    }
+
+    @Test
+    void notFoundIsProblemJsonEvenWhenClientAcceptsOnlyApplicationJson() throws Exception {
+        mockMvc.perform(get("/api/products/999999").header(HttpHeaders.AUTHORIZATION, bearer)
+                        .accept(MediaType.APPLICATION_JSON))
+                .andExpect(status().isNotFound())
+                .andExpect(content().contentTypeCompatibleWith(MediaType.APPLICATION_PROBLEM_JSON))
+                .andExpect(jsonPath("$.type").value("urn:problem-type:resource-not-found"))
+                .andExpect(jsonPath("$.detail").value("Product with id 999999 not found"))
+                .andExpect(jsonPath("$.instance").value("/api/products/999999"));
+    }
+
+    @Test
+    void unsupportedMethodReturns405Problem() throws Exception {
+        mockMvc.perform(patch("/api/categories/1").header(HttpHeaders.AUTHORIZATION, bearer))
+                .andExpect(status().isMethodNotAllowed())
+                .andExpect(content().contentTypeCompatibleWith(MediaType.APPLICATION_PROBLEM_JSON))
+                .andExpect(jsonPath("$.type").value("about:blank"))
+                .andExpect(jsonPath("$.title").value("Method Not Allowed"))
+                .andExpect(jsonPath("$.status").value(405))
+                .andExpect(jsonPath("$.instance").value("/api/categories/1"));
     }
 
     @Test
