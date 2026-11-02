@@ -1,6 +1,6 @@
 package io.dev.openspec.springbootopenspecapp.controller;
 
-import io.dev.openspec.springbootopenspecapp.common.dto.ErrorResponse;
+import io.dev.openspec.springbootopenspecapp.common.dto.ProblemDetailSchema;
 import io.dev.openspec.springbootopenspecapp.common.dto.PageResponse;
 import io.dev.openspec.springbootopenspecapp.dto.ProductRequest;
 import io.dev.openspec.springbootopenspecapp.dto.ProductResponse;
@@ -46,9 +46,9 @@ public class ProductController {
     @Operation(summary = "Cria um produto")
     @ApiResponses({
             @ApiResponse(responseCode = "201", description = "Produto criado"),
-            @ApiResponse(responseCode = "400", description = "Dados inválidos", content = @Content(schema = @Schema(implementation = ErrorResponse.class))),
-            @ApiResponse(responseCode = "401", description = "Não autenticado", content = @Content(schema = @Schema(implementation = ErrorResponse.class))),
-            @ApiResponse(responseCode = "404", description = "Categoria não encontrada", content = @Content(schema = @Schema(implementation = ErrorResponse.class)))
+            @ApiResponse(responseCode = "400", description = "Dados inválidos", content = @Content(mediaType = ProblemDetailSchema.MEDIA_TYPE, schema = @Schema(implementation = ProblemDetailSchema.class))),
+            @ApiResponse(responseCode = "401", description = "Não autenticado", content = @Content(mediaType = ProblemDetailSchema.MEDIA_TYPE, schema = @Schema(implementation = ProblemDetailSchema.class))),
+            @ApiResponse(responseCode = "404", description = "Categoria não encontrada", content = @Content(mediaType = ProblemDetailSchema.MEDIA_TYPE, schema = @Schema(implementation = ProblemDetailSchema.class)))
     })
     @PostMapping
     public ResponseEntity<ProductResponse> create(@Valid @RequestBody ProductRequest request) {
@@ -61,9 +61,9 @@ public class ProductController {
     @Operation(summary = "Lista produtos paginados, com filtro opcional por categoria")
     @ApiResponses({
             @ApiResponse(responseCode = "200", description = "Página de produtos"),
-            @ApiResponse(responseCode = "400", description = "Parâmetro inválido", content = @Content(schema = @Schema(implementation = ErrorResponse.class))),
-            @ApiResponse(responseCode = "401", description = "Não autenticado", content = @Content(schema = @Schema(implementation = ErrorResponse.class))),
-            @ApiResponse(responseCode = "404", description = "Categoria do filtro não encontrada", content = @Content(schema = @Schema(implementation = ErrorResponse.class)))
+            @ApiResponse(responseCode = "400", description = "Parâmetro inválido", content = @Content(mediaType = ProblemDetailSchema.MEDIA_TYPE, schema = @Schema(implementation = ProblemDetailSchema.class))),
+            @ApiResponse(responseCode = "401", description = "Não autenticado", content = @Content(mediaType = ProblemDetailSchema.MEDIA_TYPE, schema = @Schema(implementation = ProblemDetailSchema.class))),
+            @ApiResponse(responseCode = "404", description = "Categoria do filtro não encontrada", content = @Content(mediaType = ProblemDetailSchema.MEDIA_TYPE, schema = @Schema(implementation = ProblemDetailSchema.class)))
     })
     @GetMapping
     public PageResponse<ProductResponse> findAll(@RequestParam(required = false) Long categoryId,
@@ -74,9 +74,9 @@ public class ProductController {
     @Operation(summary = "Consulta um produto por id")
     @ApiResponses({
             @ApiResponse(responseCode = "200", description = "Produto encontrado"),
-            @ApiResponse(responseCode = "400", description = "Id inválido", content = @Content(schema = @Schema(implementation = ErrorResponse.class))),
-            @ApiResponse(responseCode = "401", description = "Não autenticado", content = @Content(schema = @Schema(implementation = ErrorResponse.class))),
-            @ApiResponse(responseCode = "404", description = "Produto não encontrado", content = @Content(schema = @Schema(implementation = ErrorResponse.class)))
+            @ApiResponse(responseCode = "400", description = "Id inválido", content = @Content(mediaType = ProblemDetailSchema.MEDIA_TYPE, schema = @Schema(implementation = ProblemDetailSchema.class))),
+            @ApiResponse(responseCode = "401", description = "Não autenticado", content = @Content(mediaType = ProblemDetailSchema.MEDIA_TYPE, schema = @Schema(implementation = ProblemDetailSchema.class))),
+            @ApiResponse(responseCode = "404", description = "Produto não encontrado", content = @Content(mediaType = ProblemDetailSchema.MEDIA_TYPE, schema = @Schema(implementation = ProblemDetailSchema.class)))
     })
     @GetMapping("/{id}")
     public ProductResponse findById(@PathVariable Long id) {
@@ -86,9 +86,9 @@ public class ProductController {
     @Operation(summary = "Atualiza um produto")
     @ApiResponses({
             @ApiResponse(responseCode = "200", description = "Produto atualizado"),
-            @ApiResponse(responseCode = "400", description = "Dados inválidos", content = @Content(schema = @Schema(implementation = ErrorResponse.class))),
-            @ApiResponse(responseCode = "401", description = "Não autenticado", content = @Content(schema = @Schema(implementation = ErrorResponse.class))),
-            @ApiResponse(responseCode = "404", description = "Produto ou categoria não encontrado", content = @Content(schema = @Schema(implementation = ErrorResponse.class)))
+            @ApiResponse(responseCode = "400", description = "Dados inválidos", content = @Content(mediaType = ProblemDetailSchema.MEDIA_TYPE, schema = @Schema(implementation = ProblemDetailSchema.class))),
+            @ApiResponse(responseCode = "401", description = "Não autenticado", content = @Content(mediaType = ProblemDetailSchema.MEDIA_TYPE, schema = @Schema(implementation = ProblemDetailSchema.class))),
+            @ApiResponse(responseCode = "404", description = "Produto ou categoria não encontrado", content = @Content(mediaType = ProblemDetailSchema.MEDIA_TYPE, schema = @Schema(implementation = ProblemDetailSchema.class)))
     })
     @PutMapping("/{id}")
     public ProductResponse update(@PathVariable Long id, @Valid @RequestBody ProductRequest request) {
@@ -98,8 +98,8 @@ public class ProductController {
     @Operation(summary = "Remove um produto")
     @ApiResponses({
             @ApiResponse(responseCode = "204", description = "Produto removido"),
-            @ApiResponse(responseCode = "401", description = "Não autenticado", content = @Content(schema = @Schema(implementation = ErrorResponse.class))),
-            @ApiResponse(responseCode = "404", description = "Produto não encontrado", content = @Content(schema = @Schema(implementation = ErrorResponse.class)))
+            @ApiResponse(responseCode = "401", description = "Não autenticado", content = @Content(mediaType = ProblemDetailSchema.MEDIA_TYPE, schema = @Schema(implementation = ProblemDetailSchema.class))),
+            @ApiResponse(responseCode = "404", description = "Produto não encontrado", content = @Content(mediaType = ProblemDetailSchema.MEDIA_TYPE, schema = @Schema(implementation = ProblemDetailSchema.class)))
     })
     @DeleteMapping("/{id}")
     public ResponseEntity<Void> delete(@PathVariable Long id) {

@@ -1,6 +1,6 @@
 package io.dev.openspec.springbootopenspecapp.controller;
 
-import io.dev.openspec.springbootopenspecapp.common.dto.ErrorResponse;
+import io.dev.openspec.springbootopenspecapp.common.dto.ProblemDetailSchema;
 import io.dev.openspec.springbootopenspecapp.dto.CategoryRequest;
 import io.dev.openspec.springbootopenspecapp.dto.CategoryResponse;
 import io.dev.openspec.springbootopenspecapp.service.CategoryService;
@@ -42,9 +42,9 @@ public class CategoryController {
     @Operation(summary = "Cria uma categoria")
     @ApiResponses({
             @ApiResponse(responseCode = "201", description = "Categoria criada"),
-            @ApiResponse(responseCode = "400", description = "Dados inválidos", content = @Content(schema = @Schema(implementation = ErrorResponse.class))),
-            @ApiResponse(responseCode = "401", description = "Não autenticado", content = @Content(schema = @Schema(implementation = ErrorResponse.class))),
-            @ApiResponse(responseCode = "409", description = "Nome já existente", content = @Content(schema = @Schema(implementation = ErrorResponse.class)))
+            @ApiResponse(responseCode = "400", description = "Dados inválidos", content = @Content(mediaType = ProblemDetailSchema.MEDIA_TYPE, schema = @Schema(implementation = ProblemDetailSchema.class))),
+            @ApiResponse(responseCode = "401", description = "Não autenticado", content = @Content(mediaType = ProblemDetailSchema.MEDIA_TYPE, schema = @Schema(implementation = ProblemDetailSchema.class))),
+            @ApiResponse(responseCode = "409", description = "Nome já existente", content = @Content(mediaType = ProblemDetailSchema.MEDIA_TYPE, schema = @Schema(implementation = ProblemDetailSchema.class)))
     })
     @PostMapping
     public ResponseEntity<CategoryResponse> create(@Valid @RequestBody CategoryRequest request) {
@@ -57,7 +57,7 @@ public class CategoryController {
     @Operation(summary = "Lista categorias ordenadas por nome")
     @ApiResponses({
             @ApiResponse(responseCode = "200", description = "Lista de categorias"),
-            @ApiResponse(responseCode = "401", description = "Não autenticado", content = @Content(schema = @Schema(implementation = ErrorResponse.class)))
+            @ApiResponse(responseCode = "401", description = "Não autenticado", content = @Content(mediaType = ProblemDetailSchema.MEDIA_TYPE, schema = @Schema(implementation = ProblemDetailSchema.class)))
     })
     @GetMapping
     public List<CategoryResponse> findAll() {
@@ -67,9 +67,9 @@ public class CategoryController {
     @Operation(summary = "Consulta uma categoria por id")
     @ApiResponses({
             @ApiResponse(responseCode = "200", description = "Categoria encontrada"),
-            @ApiResponse(responseCode = "400", description = "Id inválido", content = @Content(schema = @Schema(implementation = ErrorResponse.class))),
-            @ApiResponse(responseCode = "401", description = "Não autenticado", content = @Content(schema = @Schema(implementation = ErrorResponse.class))),
-            @ApiResponse(responseCode = "404", description = "Categoria não encontrada", content = @Content(schema = @Schema(implementation = ErrorResponse.class)))
+            @ApiResponse(responseCode = "400", description = "Id inválido", content = @Content(mediaType = ProblemDetailSchema.MEDIA_TYPE, schema = @Schema(implementation = ProblemDetailSchema.class))),
+            @ApiResponse(responseCode = "401", description = "Não autenticado", content = @Content(mediaType = ProblemDetailSchema.MEDIA_TYPE, schema = @Schema(implementation = ProblemDetailSchema.class))),
+            @ApiResponse(responseCode = "404", description = "Categoria não encontrada", content = @Content(mediaType = ProblemDetailSchema.MEDIA_TYPE, schema = @Schema(implementation = ProblemDetailSchema.class)))
     })
     @GetMapping("/{id}")
     public CategoryResponse findById(@PathVariable Long id) {
@@ -79,10 +79,10 @@ public class CategoryController {
     @Operation(summary = "Atualiza uma categoria")
     @ApiResponses({
             @ApiResponse(responseCode = "200", description = "Categoria atualizada"),
-            @ApiResponse(responseCode = "400", description = "Dados inválidos", content = @Content(schema = @Schema(implementation = ErrorResponse.class))),
-            @ApiResponse(responseCode = "401", description = "Não autenticado", content = @Content(schema = @Schema(implementation = ErrorResponse.class))),
-            @ApiResponse(responseCode = "404", description = "Categoria não encontrada", content = @Content(schema = @Schema(implementation = ErrorResponse.class))),
-            @ApiResponse(responseCode = "409", description = "Nome já existente", content = @Content(schema = @Schema(implementation = ErrorResponse.class)))
+            @ApiResponse(responseCode = "400", description = "Dados inválidos", content = @Content(mediaType = ProblemDetailSchema.MEDIA_TYPE, schema = @Schema(implementation = ProblemDetailSchema.class))),
+            @ApiResponse(responseCode = "401", description = "Não autenticado", content = @Content(mediaType = ProblemDetailSchema.MEDIA_TYPE, schema = @Schema(implementation = ProblemDetailSchema.class))),
+            @ApiResponse(responseCode = "404", description = "Categoria não encontrada", content = @Content(mediaType = ProblemDetailSchema.MEDIA_TYPE, schema = @Schema(implementation = ProblemDetailSchema.class))),
+            @ApiResponse(responseCode = "409", description = "Nome já existente", content = @Content(mediaType = ProblemDetailSchema.MEDIA_TYPE, schema = @Schema(implementation = ProblemDetailSchema.class)))
     })
     @PutMapping("/{id}")
     public CategoryResponse update(@PathVariable Long id, @Valid @RequestBody CategoryRequest request) {
@@ -92,9 +92,9 @@ public class CategoryController {
     @Operation(summary = "Remove uma categoria sem produtos")
     @ApiResponses({
             @ApiResponse(responseCode = "204", description = "Categoria removida"),
-            @ApiResponse(responseCode = "401", description = "Não autenticado", content = @Content(schema = @Schema(implementation = ErrorResponse.class))),
-            @ApiResponse(responseCode = "404", description = "Categoria não encontrada", content = @Content(schema = @Schema(implementation = ErrorResponse.class))),
-            @ApiResponse(responseCode = "409", description = "Categoria possui produtos", content = @Content(schema = @Schema(implementation = ErrorResponse.class)))
+            @ApiResponse(responseCode = "401", description = "Não autenticado", content = @Content(mediaType = ProblemDetailSchema.MEDIA_TYPE, schema = @Schema(implementation = ProblemDetailSchema.class))),
+            @ApiResponse(responseCode = "404", description = "Categoria não encontrada", content = @Content(mediaType = ProblemDetailSchema.MEDIA_TYPE, schema = @Schema(implementation = ProblemDetailSchema.class))),
+            @ApiResponse(responseCode = "409", description = "Categoria possui produtos", content = @Content(mediaType = ProblemDetailSchema.MEDIA_TYPE, schema = @Schema(implementation = ProblemDetailSchema.class)))
     })
     @DeleteMapping("/{id}")
     public ResponseEntity<Void> delete(@PathVariable Long id) {

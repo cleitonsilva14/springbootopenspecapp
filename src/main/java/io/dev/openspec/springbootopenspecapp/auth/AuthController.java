@@ -3,7 +3,7 @@ package io.dev.openspec.springbootopenspecapp.auth;
 import io.dev.openspec.springbootopenspecapp.auth.dto.LoginRequest;
 import io.dev.openspec.springbootopenspecapp.auth.dto.LoginResponse;
 import io.dev.openspec.springbootopenspecapp.security.JwtService;
-import io.dev.openspec.springbootopenspecapp.common.dto.ErrorResponse;
+import io.dev.openspec.springbootopenspecapp.common.dto.ProblemDetailSchema;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.media.Schema;
@@ -35,8 +35,8 @@ public class AuthController {
     @Operation(summary = "Autentica e emite um token JWT")
     @ApiResponses({
             @ApiResponse(responseCode = "200", description = "Token emitido"),
-            @ApiResponse(responseCode = "400", description = "Corpo inválido", content = @Content(schema = @Schema(implementation = ErrorResponse.class))),
-            @ApiResponse(responseCode = "401", description = "Credenciais inválidas", content = @Content(schema = @Schema(implementation = ErrorResponse.class)))
+            @ApiResponse(responseCode = "400", description = "Corpo inválido", content = @Content(mediaType = ProblemDetailSchema.MEDIA_TYPE, schema = @Schema(implementation = ProblemDetailSchema.class))),
+            @ApiResponse(responseCode = "401", description = "Credenciais inválidas", content = @Content(mediaType = ProblemDetailSchema.MEDIA_TYPE, schema = @Schema(implementation = ProblemDetailSchema.class)))
     })
     @PostMapping("/login")
     public LoginResponse login(@Valid @RequestBody LoginRequest request) {
