@@ -1,0 +1,51 @@
+# Tasks
+
+## 1. Build e configuração base
+
+- [x] 1.1 Adicionar ao `pom.xml` `spring-boot-starter-security`, `spring-boot-starter-validation`, `io.jsonwebtoken:jjwt-api` (compile) e `jjwt-impl`/`jjwt-jackson` (runtime) na versão 0.12.x estável mais recente, e `spring-boot-starter-security-test` (test); preencher `<name>`/`<description>` do projeto; verificar com `./mvnw -q dependency:resolve` e `./mvnw -q compile` sem erros
+- [x] 1.2 Configurar `src/main/resources/application.properties`: datasource H2 em memória `jdbc:h2:mem:catalog`, `spring.jpa.hibernate.ddl-auto=update`, `spring.jpa.open-in-view=false`, `spring.data.web.pageable.max-page-size=100`, `app.security.jwt.secret=${APP_SECURITY_JWT_SECRET:<base64 dev ≥32 bytes>}`, `app.security.jwt.expiration=${APP_SECURITY_JWT_EXPIRATION:1h}`, `app.security.user.username/password` com placeholders de ambiente; criar `application-dev.properties` habilitando o console H2; verificar que a aplicação sobe com `./mvnw spring-boot:run`
+- [x] 1.3 Criar a estrutura de pacotes `config`, `security`, `auth`, `category`, `product`, `common/dto` e `exception` sob `io.dev.openspec.springbootopenspecapp` (conforme design §1) e verificar que `./mvnw -q compile` passa
+
+## 2. Tratamento global de erros
+
+- [x] 2.1 Criar `common/dto/ErrorResponse` (record: `timestamp`, `status`, `error`, `message`, `path`, `fieldErrors` com `@JsonInclude(NON_EMPTY)`) e `FieldErrorItem(field, message)`; verificar compilação
+- [x] 2.2 Criar `exception/ResourceNotFoundException` (construtor `(String resource, Object id)` gerando mensagem "Category with id 42 not found") e `exception/BusinessConflictException`; verificar compilação
+- [x] 2.3 Implementar `exception/GlobalExceptionHandler` (`@RestControllerAdvice`) mapeando 400 (`MethodArgumentNotValidException` com todos os `fieldErrors`, `HandlerMethodValidationException`, `HttpMessageNotReadableException`, `MethodArgumentTypeMismatchException`), 401 (`AuthenticationException`/`BadCredentialsException`, mensagem genérica), 404 (`ResourceNotFoundException`, `EntityNotFoundException`), 409 (`BusinessConflictException`, `DataIntegrityViolationException`) e 500 (`Exception`, mensagem genérica + log com stack trace); verificar com teste unitário `GlobalExceptionHandlerTest` que cada exceção produz o status e os campos esperados e que o 500 não expõe a mensagem original
+
+## 3. Autenticação JWT e segurança
+
+- [x] 3.1 Criar `security/JwtProperties` (`@ConfigurationProperties("app.security.jwt")`: `secret`, `expiration` como `Duration`) e `security/AppUserProperties` (`app.security.user`), habilitados via `@EnableConfigurationProperties`; verificar que a aplicação inicia lendo os valores
+- [x] 3.2 Implementar `security/JwtService` (JJWT 0.12: `generateToken(username)`, `extractUsername(token)`, `isTokenValid(token)`, `getExpiration()`), HMAC-SHA256 com chave Base64 e falha na inicialização se a chave tiver < 256 bits; verificar com `JwtServiceTest` cobrindo token válido, expirado, assinatura de outro segredo, token malformado e segredo curto
+- [x] 3.3 Implementar `security/JsonAuthenticationEntryPoint` (401) e `security/JsonAccessDeniedHandler` (403) escrevendo `ErrorResponse` em JSON com `path` da requisição; verificar com teste unitário usando `MockHttpServletRequest/Response`
+- [x] 3.4 Implementar `security/JwtAuthenticationFilter` (`OncePerRequestFilter`): lê `Authorization: Bearer`, valida via `JwtService`, popula `SecurityContextHolder` com `UsernamePasswordAuthenticationToken`; token inválido limpa o contexto e segue a cadeia; verificar com `JwtAuthenticationFilterTest` (token válido autentica, ausente/inválido não autentica)
+- [x] 3.5 Implementar `security/SecurityConfig`: `SecurityFilterChain` com CSRF desabilitado, `SessionCreationPolicy.STATELESS`, `httpBasic`/`formLogin` desabilitados, `permitAll` para `/api/auth/**`, `/swagger-ui/**`, `/swagger-ui.html`, `/v3/api-docs/**`, `/error`, `authenticated()` para o restante, filtro JWT antes de `UsernamePasswordAuthenticationFilter`, entry point/access-denied customizados; beans `PasswordEncoder` (BCrypt), `UserDetailsService` (`InMemoryUserDetailsManager` a partir de `AppUserProperties`, senha codificada na inicialização) e `AuthenticationManager`; verificar que `contextLoads` passa
+- [x] 3.6 Criar `auth/dto/LoginRequest` (`@NotBlank username`, `@NotBlank password`), `auth/dto/LoginResponse(accessToken, tokenType="Bearer", expiresIn)` e `auth/AuthController` (`POST /api/auth/login` usando `AuthenticationManager` + `JwtService`); verificar com `AuthControllerTest` (`@WebMvcTest` + `@MockitoBean`) os casos 200 com token, 401 com credenciais inválidas e 400 com corpo inválido
+
+## 4. Categorias
+
+- [x] 4.1 Criar entidade `category/Category` (`id` Long IDENTITY, `name` not null/unique/100, `description` 500; Lombok `@Getter/@Setter/@NoArgsConstructor`) e `category/CategoryRepository extends JpaRepository<Category, Long>` com `existsByNameIgnoreCase`, `existsByNameIgnoreCaseAndIdNot` e `findAll(Sort)`; verificar com `CategoryRepositoryTest` (`@DataJpaTest`) a busca case-insensitive e a constraint de unicidade
+- [x] 4.2 Criar DTOs `category/dto/CategoryRequest` (`@NotBlank @Size(max=100) name`, `@Size(max=500) description`), `CategoryResponse(id, name, description)` e `category/CategoryMapper` (toEntity, updateEntity, toResponse); verificar com `CategoryMapperTest`
+- [x] 4.3 Implementar `category/CategoryService` (`create`, `findAll` ordenado por nome, `findById`, `update`, `delete`) com 409 para nome duplicado (ignorando caixa e o próprio id na atualização), 404 para id inexistente e 409 ao remover categoria com produtos (via `ProductRepository.existsByCategoryId`, criado em 5.1 — declarar a interface com esse método já nesta task); verificar com `CategoryServiceTest` (Mockito) cobrindo todos os cenários de `specs/catalog/category-management/spec.md`
+- [x] 4.4 Implementar `category/CategoryController` (`/api/categories`: `POST` 201 + `Location`, `GET` lista, `GET /{id}`, `PUT /{id}`, `DELETE /{id}` 204) com `@Valid`; verificar com `CategoryControllerTest` (`@WebMvcTest`, `@Import` da configuração de segurança, `@MockitoBean CategoryService`, `@WithMockUser`) cobrindo 201/200/204, 400 de validação com `fieldErrors`, 404, 409 e 401 sem autenticação
+
+## 5. Produtos
+
+- [x] 5.1 Criar entidade `product/Product` (`id` Long IDENTITY, `name` not null/150, `description` 1000, `price` `BigDecimal(12,2)` not null, `stockQuantity` not null, `@ManyToOne(LAZY, optional=false) category`, `createdAt`/`updatedAt` `Instant` com `@CreationTimestamp`/`@UpdateTimestamp`) e completar `product/ProductRepository` com `existsByCategoryId`, `findByCategoryId(Long, Pageable)` e `findAll(Pageable)` com `@EntityGraph(attributePaths="category")`; verificar com `ProductRepositoryTest` (`@DataJpaTest`) o filtro por categoria, a paginação e o preenchimento/atualização dos carimbos
+- [x] 5.2 Criar `common/dto/PageResponse<T>(content, page, size, totalElements, totalPages)` com fábrica `from(Page<T>)`, DTOs `product/dto/ProductRequest` (`@NotBlank @Size(max=150) name`, `@Size(max=1000) description`, `@NotNull @Positive @Digits(integer=10, fraction=2) price`, `@NotNull @PositiveOrZero stockQuantity`, `@NotNull categoryId`), `ProductResponse` (com `CategorySummary(id, name)`, `createdAt`, `updatedAt`) e `product/ProductMapper`; verificar com `ProductMapperTest` e teste de `PageResponse.from`
+- [x] 5.3 Implementar `product/ProductService` (`create`, `findAll(categoryId opcional, Pageable)`, `findById`, `update`, `delete`) resolvendo a categoria antes de persistir (404 sem persistência), validando a categoria do filtro (404) e mapeando para DTO dentro da transação; verificar com `ProductServiceTest` (Mockito) cobrindo os cenários de `specs/catalog/product-management/spec.md`, incluindo `verify(productRepository, never()).save(...)` quando a categoria não existe
+- [x] 5.4 Implementar `product/ProductController` (`/api/products`: `POST` 201 + `Location`, `GET` paginado com `@RequestParam(required=false) Long categoryId` e `@PageableDefault(size=20, sort="name")`, `GET /{id}`, `PUT /{id}`, `DELETE /{id}` 204); verificar com `ProductControllerTest` (`@WebMvcTest`, `@MockitoBean ProductService`, `@WithMockUser`) cobrindo 201/200/204, 400 com múltiplos `fieldErrors`, 400 para `/api/products/abc`, 404 de categoria/produto, paginação e 401 sem autenticação
+
+## 6. Documentação OpenAPI
+
+- [x] 6.1 Criar `config/OpenApiConfig` com bean `OpenAPI` (título "Product Catalog API", versão, descrição) e `SecurityScheme` `bearerAuth` (HTTP, `bearer`, `JWT`); anotar `CategoryController` e `ProductController` com `@SecurityRequirement(name="bearerAuth")` e `@Tag`, e `AuthController` sem requisito de segurança; verificar acessando `/swagger-ui/index.html` e o botão "Authorize"
+- [x] 6.2 Anotar as operações com `@Operation` e `@ApiResponse` (201/200/204, 400, 401, 404, 409 conforme a spec) referenciando o schema `ErrorResponse`; verificar com `OpenApiDocsTest` (`@SpringBootTest` + MockMvc) que `/v3/api-docs` responde 200 sem token, contém os caminhos `/api/auth/login`, `/api/categories`, `/api/products`, o esquema `bearerAuth` com `bearerFormat` "JWT" e que `POST /api/products` lista 201, 400, 401 e 404
+
+## 7. Verificação integrada
+
+- [x] 7.1 Criar `CatalogApiIntegrationTest` (`@SpringBootTest` + `@AutoConfigureMockMvc`, H2) exercitando o fluxo ponta a ponta: login → criar categoria → criar produto → listar com `categoryId` → remover categoria com produto (409) → remover produto → remover categoria (204), além de 401 sem token, 401 com token adulterado e ausência de `Set-Cookie` de sessão; verificar com `./mvnw test -Dtest=CatalogApiIntegrationTest`
+- [x] 7.2 Atualizar `HELP.md` com instruções de execução, variáveis de ambiente (`APP_SECURITY_JWT_SECRET`, `APP_SECURITY_USER_USERNAME`, `APP_SECURITY_USER_PASSWORD`, `APP_SECURITY_JWT_EXPIRATION`) e exemplo de uso via curl/Swagger; verificar executando os comandos documentados contra a aplicação em execução
+- [x] 7.3 Executar `./mvnw clean verify` e confirmar que todos os testes (incluindo `contextLoads`) passam sem falhas
+
+## Workflow follow-up
+
+- Arquivar a mudança com `/opsx:archive` após revisão e implementação concluídas.
